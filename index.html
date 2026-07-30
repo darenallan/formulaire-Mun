@@ -131,6 +131,30 @@
 </head>
 <body>
 
+<!-- Formulaire caché : sert uniquement à Netlify pour détecter les champs au moment du build. Ne pas supprimer, ne pas afficher. -->
+<form name="vendor-onboarding" data-netlify="true" data-netlify-honeypot="bot-field" hidden>
+  <input type="text" name="entreprise_nom">
+  <input type="text" name="entreprise_nom_commercial">
+  <input type="text" name="responsable_nom">
+  <input type="tel" name="telephone">
+  <input type="email" name="email">
+  <input type="text" name="ville">
+  <input type="text" name="quartier">
+  <input type="text" name="confirm_liste_produits">
+  <input type="text" name="confirm_description">
+  <input type="text" name="confirm_prix_detail">
+  <input type="text" name="confirm_prix_gros">
+  <textarea name="produits"></textarea>
+  <textarea name="observations"></textarea>
+  <input type="text" name="commercant_nom">
+  <input type="date" name="commercant_date">
+  <input type="file" name="logo">
+  <input type="file" name="photo_0">
+  <input type="file" name="photo_1">
+  <input type="file" name="photo_2">
+  <input type="file" name="photo_3">
+</form>
+
 <header class="letterhead">
   <div>
     <div class="mark">MUN<span>.</span>MARKET</div>
@@ -149,7 +173,11 @@
 
   <main>
     <div id="status-banner"></div>
-    <form id="vendor-form" novalidate>
+    <form id="vendor-form" name="vendor-onboarding" method="POST" data-netlify="true" data-netlify-honeypot="bot-field" novalidate>
+      <input type="hidden" name="form-name" value="vendor-onboarding">
+      <p style="position:absolute;left:-9999px;" aria-hidden="true">
+        <label>Ne pas remplir : <input name="bot-field" tabindex="-1" autocomplete="off"></label>
+      </p>
 
       <!-- 01 ENTREPRISE -->
       <section class="card" id="sec-entreprise">
@@ -196,7 +224,7 @@
       <section class="card" id="sec-elements">
         <div class="card-head"><span class="eyebrow">02</span><h2>Éléments à transmettre</h2></div>
         <div class="card-body">
-          <p class="hint">Formats acceptés : PNG, JPG, PDF — 5 Mo maximum par fichier.</p>
+          <p class="hint">Fichiers joints directement au dossier — 2 Mo max par fichier (limite totale par envoi : 8 Mo).</p>
 
           <div class="field full" style="margin-bottom:20px;">
             <label>Logo de l'entreprise</label>
@@ -205,7 +233,7 @@
                 <input type="file" id="logo-input" accept=".png,.jpg,.jpeg,.pdf">
               </label>
               <div class="chips" id="logo-chips"></div>
-              <span class="constraint">1 fichier — PNG, JPG ou PDF, 5 Mo max.</span>
+              <span class="constraint">1 fichier — PNG, JPG ou PDF, 2 Mo max.</span>
             </div>
           </div>
 
@@ -216,7 +244,7 @@
                 <input type="file" id="photos-input" accept=".png,.jpg,.jpeg" multiple>
               </label>
               <div class="chips" id="photos-chips"></div>
-              <span class="constraint">10 fichiers max — PNG ou JPG, 5 Mo max chacun.</span>
+              <span class="constraint">4 fichiers max — PNG ou JPG, 2 Mo max chacun. Au-delà, envoyez le reste par WhatsApp au contact MUN FASO.</span>
             </div>
           </div>
 
@@ -318,10 +346,11 @@
 (() => {
   'use strict';
 
-  // Endpoint à adapter côté Express (voir note de sécurité en bas de fichier)
-  const API_ENDPOINT = '/api/vendor-onboarding';
-  const MAX_FILE_MB = 5;
-  const MAX_PHOTOS = 10;
+  // Netlify Forms : la soumission part vers "/" avec le champ form-name.
+  // Fonctionne uniquement une fois ce fichier déployé sur Netlify (voir instructions en bas de fichier).
+  const API_ENDPOINT = '/';
+  const MAX_FILE_MB = 2;      // marge de sécurité : Netlify plafonne chaque soumission à 8 Mo au total
+  const MAX_PHOTOS = 4;
   const ALLOWED_IMG = ['image/png','image/jpeg'];
   const ALLOWED_LOGO = [...ALLOWED_IMG,'application/pdf'];
 
@@ -462,6 +491,8 @@
 
   function buildFormData() {
     const fd = new FormData();
+    fd.append('form-name', 'vendor-onboarding');
+    fd.append('bot-field', form.elements['bot-field'].value); // doit rester vide — rempli = bot
     const fields = ['entreprise_nom','entreprise_nom_commercial','responsable_nom','telephone','email',
                      'ville','quartier','observations','commercant_nom','commercant_date'];
     fields.forEach(name => fd.append(name, form.elements[name]?.value.trim() || ''));
@@ -516,12 +547,21 @@
 })();
 
 /*
- * Sécurité côté serveur (Express) — à implémenter, ce fichier ne fait que de la UX :
- * - multer avec fileFilter (mime + extension) et limits.fileSize (5 Mo), stockage hors webroot
- * - express-validator sur tous les champs texte (longueur, whitelist catégories)
- * - express-rate-limit sur POST /api/vendor-onboarding (anti-spam/anti-flood)
- * - CSRF token si session cookie utilisée ; sinon endpoint public protégé par reCAPTCHA/hCaptcha
- * - Ne jamais servir les fichiers uploadés sans re-vérification du type réel (magic bytes, pas juste l'extension)
+ * DÉPLOIEMENT (Netlify Forms — gratuit, fichiers inclus) :
+ * 1. Déposer ce dossier sur https://app.netlify.com/drop (aucun compte requis pour un test,
+ *    compte gratuit conseillé pour retrouver les soumissions dans la durée).
+ * 2. Au build, Netlify scanne le fichier et détecte le <form name="vendor-onboarding"> —
+ *    ne pas renommer ni supprimer le formulaire caché en haut du <body>, il sert à cette détection.
+ * 3. Les soumissions (champs + fichiers) apparaissent dans Site → Forms → vendor-onboarding,
+ *    avec notification par e-mail configurable dans Site settings → Forms → Notifications.
+ *
+ * SÉCURITÉ :
+ * - Champ bot-field = piège à bots (rempli par les robots, jamais par un humain) → filtré par Netlify.
+ * - Validation client (type/taille de fichier, champs requis) = confort d'usage uniquement ;
+ *   Netlify applique ses propres filtres anti-spam côté serveur, mais ne revalide pas le contenu métier.
+ * - Ne pas mettre de données sensibles (mots de passe, IBAN…) dans ce formulaire : les soumissions
+ *   Netlify Forms sont lisibles par toute personne ayant accès au dashboard du site.
+ * - Limite stricte : 8 Mo par soumission tous fichiers compris — au-delà, la soumission échoue silencieusement.
  */
 </script>
 </body>
