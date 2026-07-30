@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MUN.MARKET — Dossier fournisseur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F4EE;
+    --surface:#FFFFFF;
+    --ink:#1C1A17;
+    --ink-soft:#726A5C;
+    --line:#E4DECF;
+    --gold:#A8823E;
+    --gold-deep:#82631F;
+    --gold-tint:#F1E7D0;
+    --error:#A63B2A;
+    --ok:#3D6B4A;
+    --radius:2px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:15px;line-height:1.5;}
+  h1,h2,h3{font-family:'Fraunces',serif;font-weight:600;margin:0;}
+  .letterhead{
+    background:var(--ink);color:var(--gold-tint);
+    padding:28px clamp(20px,5vw,48px);
+    display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;
+    border-bottom:3px solid var(--gold);
+  }
+  .letterhead .mark{font-family:'Fraunces',serif;font-size:26px;font-weight:700;letter-spacing:.03em;color:#fff;}
+  .letterhead .mark span{color:var(--gold);}
+  .letterhead .sub{font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:#C9BFA6;}
+  .letterhead .ref{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#C9BFA6;text-align:right;}
+
+  .layout{display:flex;max-width:1080px;margin:0 auto;align-items:flex-start;}
+  .rail{
+    position:sticky;top:0;flex:0 0 190px;padding:40px 0 40px 24px;
+    display:flex;flex-direction:column;gap:2px;
+  }
+  .rail button{
+    all:unset;cursor:pointer;display:flex;gap:10px;align-items:baseline;
+    padding:12px 10px;border-left:2px solid var(--line);color:var(--ink-soft);
+    font-size:13px;transition:border-color .15s, color .15s;
+  }
+  .rail button .n{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);}
+  .rail button.active{border-left-color:var(--gold);color:var(--ink);font-weight:600;}
+  .rail button.active .n{color:var(--gold-deep);}
+
+  main{flex:1;padding:40px clamp(16px,4vw,48px) 100px;min-width:0;}
+  .card{background:var(--surface);border:1px solid var(--line);margin-bottom:28px;}
+  .card-head{padding:20px 28px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:14px;}
+  .card-head .eyebrow{font-family:'IBM Plex Mono',monospace;color:var(--gold-deep);font-size:12px;}
+  .card-body{padding:24px 28px 28px;}
+  .card-body p.hint{color:var(--ink-soft);font-size:13px;margin:-8px 0 18px;}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px 20px;}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field.full{grid-column:1/-1;}
+  label{font-size:12.5px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.03em;}
+  label .req{color:var(--error);}
+  input[type=text],input[type=email],input[type=tel],input[type=number],input[type=date],select,textarea{
+    font-family:'Inter',sans-serif;font-size:14.5px;padding:10px 12px;border:1px solid var(--line);
+    background:#fff;color:var(--ink);border-radius:var(--radius);
+  }
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:var(--gold);}
+  textarea{resize:vertical;min-height:70px;font-family:'Inter',sans-serif;}
+  .invalid{border-color:var(--error) !important;}
+  .err-msg{color:var(--error);font-size:12px;display:none;}
+  .invalid + .err-msg, .field.has-error .err-msg{display:block;}
+
+  .checklist{display:flex;flex-direction:column;gap:14px;}
+  .checkrow{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line);}
+  .checkrow:last-child{border-bottom:none;}
+  .checkrow input[type=checkbox]{margin-top:3px;width:16px;height:16px;accent-color:var(--gold-deep);}
+  .checkrow label{text-transform:none;font-weight:500;font-size:14px;color:var(--ink);}
+
+  .upload{border:1px dashed var(--line);padding:16px;display:flex;flex-direction:column;gap:10px;background:#FCFAF4;}
+  .upload .drop-label{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--gold-deep);cursor:pointer;}
+  .upload input[type=file]{display:none;}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{display:flex;align-items:center;gap:6px;background:var(--gold-tint);border:1px solid var(--line);font-size:12px;padding:5px 8px;}
+  .chip button{all:unset;cursor:pointer;color:var(--error);font-weight:700;padding:0 2px;}
+  .upload .constraint{font-size:11.5px;color:var(--ink-soft);}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  thead th{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;color:var(--ink-soft);
+    text-align:left;padding:8px 8px;border-bottom:2px solid var(--ink);white-space:nowrap;}
+  tbody td{padding:6px 6px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tbody td input,tbody td select,tbody td textarea{width:100%;min-width:90px;padding:7px 8px;font-size:13.5px;}
+  tbody td.num{font-family:'IBM Plex Mono',monospace;color:var(--gold-deep);padding-top:12px;width:26px;}
+  tbody td.rm button{all:unset;cursor:pointer;color:var(--error);font-size:16px;padding:6px;}
+  .table-wrap{overflow-x:auto;}
+  .add-row{margin-top:14px;}
+  .btn{font-family:'Inter',sans-serif;font-weight:600;font-size:13.5px;padding:10px 18px;border:1px solid var(--ink);
+    background:transparent;color:var(--ink);cursor:pointer;border-radius:var(--radius);}
+  .btn:hover{background:var(--ink);color:#fff;}
+  .btn-gold{background:var(--gold-deep);border-color:var(--gold-deep);color:#fff;}
+  .btn-gold:hover{background:#6b501a;}
+  .btn-ghost{border-color:var(--line);color:var(--ink-soft);}
+  .btn-ghost:hover{background:var(--line);color:var(--ink);}
+
+  .staff-note{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);background:var(--gold-tint);
+    padding:8px 10px;margin-bottom:14px;border-left:2px solid var(--gold);}
+  fieldset[disabled]{opacity:.55;}
+
+  .certify{display:flex;gap:10px;align-items:flex-start;background:var(--gold-tint);padding:14px 16px;margin-bottom:20px;border-left:2px solid var(--gold);}
+  .certify input{margin-top:3px;width:16px;height:16px;accent-color:var(--gold-deep);}
+
+  .submit-bar{position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--line);padding:16px 0;
+    display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+  #status-banner{display:none;padding:12px 16px;border-left:3px solid var(--error);background:#FBEAE6;color:var(--error);font-size:13.5px;margin-bottom:20px;}
+  #status-banner.ok{border-color:var(--ok);background:#E8F0E9;color:var(--ok);}
+  #status-banner ul{margin:6px 0 0;padding-left:18px;}
+
+  @media(max-width:820px){
+    .layout{flex-direction:column;}
+    .rail{position:static;flex-direction:row;overflow-x:auto;width:100%;padding:14px 16px;gap:0;}
+    .rail button{border-left:none;border-bottom:2px solid var(--line);white-space:nowrap;}
+    .rail button.active{border-bottom-color:var(--gold);}
+    .grid{grid-template-columns:1fr;}
+  }
+  @media print{
+    .rail,.submit-bar,.upload .drop-label,button.rm{display:none !important;}
+    body{background:#fff;}
+    .card{border:none;box-shadow:none;break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+
+<header class="letterhead">
+  <div>
+    <div class="mark">MUN<span>.</span>MARKET</div>
+    <div class="sub">Dossier fournisseur — création de boutique</div>
+  </div>
+  <div class="ref">RÉF. <span id="ref-code"></span><br>Généré le <span id="ref-date"></span></div>
+</header>
+
+<div class="layout">
+  <nav class="rail" id="rail">
+    <button data-target="sec-entreprise" class="active"><span class="n">01</span> Entreprise</button>
+    <button data-target="sec-elements"><span class="n">02</span> Éléments</button>
+    <button data-target="sec-produits"><span class="n">03</span> Produits</button>
+    <button data-target="sec-engagement"><span class="n">04</span> Engagement</button>
+  </nav>
+
+  <main>
+    <div id="status-banner"></div>
+    <form id="vendor-form" novalidate>
+
+      <!-- 01 ENTREPRISE -->
+      <section class="card" id="sec-entreprise">
+        <div class="card-head"><span class="eyebrow">01</span><h2>Informations sur l'entreprise</h2></div>
+        <div class="card-body">
+          <div class="grid">
+            <div class="field">
+              <label>Nom de l'entreprise <span class="req">*</span></label>
+              <input type="text" name="entreprise_nom" required maxlength="120">
+              <span class="err-msg">Champ requis.</span>
+            </div>
+            <div class="field">
+              <label>Nom commercial</label>
+              <input type="text" name="entreprise_nom_commercial" maxlength="120">
+            </div>
+            <div class="field">
+              <label>Nom du responsable <span class="req">*</span></label>
+              <input type="text" name="responsable_nom" required maxlength="120">
+              <span class="err-msg">Champ requis.</span>
+            </div>
+            <div class="field">
+              <label>Téléphone <span class="req">*</span></label>
+              <input type="tel" name="telephone" required placeholder="+226 XX XX XX XX" pattern="[0-9+ ]{8,20}">
+              <span class="err-msg">Numéro invalide.</span>
+            </div>
+            <div class="field">
+              <label>E-mail <span class="req">*</span></label>
+              <input type="email" name="email" required maxlength="150">
+              <span class="err-msg">E-mail invalide.</span>
+            </div>
+            <div class="field">
+              <label>Ville</label>
+              <input type="text" name="ville" maxlength="80" value="Ouagadougou">
+            </div>
+            <div class="field">
+              <label>Quartier</label>
+              <input type="text" name="quartier" maxlength="80">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 02 ELEMENTS -->
+      <section class="card" id="sec-elements">
+        <div class="card-head"><span class="eyebrow">02</span><h2>Éléments à transmettre</h2></div>
+        <div class="card-body">
+          <p class="hint">Formats acceptés : PNG, JPG, PDF — 5 Mo maximum par fichier.</p>
+
+          <div class="field full" style="margin-bottom:20px;">
+            <label>Logo de l'entreprise</label>
+            <div class="upload">
+              <label class="drop-label">📎 Choisir un fichier
+                <input type="file" id="logo-input" accept=".png,.jpg,.jpeg,.pdf">
+              </label>
+              <div class="chips" id="logo-chips"></div>
+              <span class="constraint">1 fichier — PNG, JPG ou PDF, 5 Mo max.</span>
+            </div>
+          </div>
+
+          <div class="field full" style="margin-bottom:20px;">
+            <label>Photographies des produits</label>
+            <div class="upload">
+              <label class="drop-label">📎 Ajouter des photos
+                <input type="file" id="photos-input" accept=".png,.jpg,.jpeg" multiple>
+              </label>
+              <div class="chips" id="photos-chips"></div>
+              <span class="constraint">10 fichiers max — PNG ou JPG, 5 Mo max chacun.</span>
+            </div>
+          </div>
+
+          <div class="checklist">
+            <div class="checkrow">
+              <input type="checkbox" id="chk-liste" name="confirm_liste_produits">
+              <label for="chk-liste">La liste complète des produits à publier est renseignée dans la section 03.</label>
+            </div>
+            <div class="checkrow">
+              <input type="checkbox" id="chk-desc" name="confirm_description">
+              <label for="chk-desc">La description de chaque produit est renseignée.</label>
+            </div>
+            <div class="checkrow">
+              <input type="checkbox" id="chk-detail" name="confirm_prix_detail">
+              <label for="chk-detail">Le prix de vente au détail de chaque produit est renseigné.</label>
+            </div>
+            <div class="checkrow">
+              <input type="checkbox" id="chk-gros" name="confirm_prix_gros">
+              <label for="chk-gros">Un prix de vente en gros est applicable et renseigné.</label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 03 PRODUITS -->
+      <section class="card" id="sec-produits">
+        <div class="card-head"><span class="eyebrow">03</span><h2>Informations sur les produits</h2></div>
+        <div class="card-body">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>N°</th><th>Nom du produit</th><th>Catégorie</th><th>Marque</th>
+                  <th>Description</th><th>Prix détail (FCFA)</th><th>Prix gros (FCFA)</th>
+                  <th>Photo dispo.</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="products-body"></tbody>
+            </table>
+          </div>
+          <div class="add-row"><button type="button" class="btn" id="add-product">+ Ajouter un produit</button></div>
+
+          <div class="field full" style="margin-top:24px;">
+            <label>Observations</label>
+            <textarea name="observations" maxlength="1000" placeholder="Précisions utiles sur les produits, délais, stock…"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- 04 ENGAGEMENT -->
+      <section class="card" id="sec-engagement">
+        <div class="card-head"><span class="eyebrow">04</span><h2>Engagement</h2></div>
+        <div class="card-body">
+          <div class="certify">
+            <input type="checkbox" id="chk-certify" name="certifie" required>
+            <label for="chk-certify" style="text-transform:none;font-weight:500;">
+              Je certifie que les informations fournies dans ce dossier sont exactes et j'autorise leur
+              utilisation dans le cadre de la création de ma boutique sur MUN.MARKET.
+            </label>
+          </div>
+          <div class="grid">
+            <div class="field">
+              <label>Nom du commerçant <span class="req">*</span></label>
+              <input type="text" name="commercant_nom" required maxlength="120">
+              <span class="err-msg">Champ requis.</span>
+            </div>
+            <div class="field">
+              <label>Date</label>
+              <input type="date" name="commercant_date">
+            </div>
+          </div>
+
+          <div class="staff-note">RÉSERVÉ À L'ÉQUIPE MUN FASO — complété après réception du dossier</div>
+          <fieldset disabled style="border:none;padding:0;margin:0;">
+            <div class="grid">
+              <div class="field">
+                <label>Nom du lead MUN FASO</label>
+                <input type="text" name="lead_nom" maxlength="120">
+              </div>
+              <div class="field">
+                <label>Date</label>
+                <input type="date" name="lead_date">
+              </div>
+            </div>
+          </fieldset>
+        </div>
+      </section>
+
+      <div class="submit-bar">
+        <button type="submit" class="btn btn-gold">Envoyer le dossier</button>
+        <button type="button" class="btn btn-ghost" id="btn-download">Télécharger en JSON</button>
+        <button type="button" class="btn btn-ghost" id="btn-print">Imprimer / PDF</button>
+      </div>
+    </form>
+  </main>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // Endpoint à adapter côté Express (voir note de sécurité en bas de fichier)
+  const API_ENDPOINT = '/api/vendor-onboarding';
+  const MAX_FILE_MB = 5;
+  const MAX_PHOTOS = 10;
+  const ALLOWED_IMG = ['image/png','image/jpeg'];
+  const ALLOWED_LOGO = [...ALLOWED_IMG,'application/pdf'];
+
+  document.getElementById('ref-date').textContent = new Date().toLocaleDateString('fr-FR');
+  document.getElementById('ref-code').textContent = 'MM-' + Date.now().toString(36).toUpperCase();
+
+  // ---- Nav rail (IntersectionObserver) ----
+  const railButtons = [...document.querySelectorAll('#rail button')];
+  railButtons.forEach(b => b.addEventListener('click', () => {
+    document.getElementById(b.dataset.target).scrollIntoView({behavior:'smooth', block:'start'});
+  }));
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        railButtons.forEach(b => b.classList.toggle('active', b.dataset.target === e.target.id));
+      }
+    });
+  }, {rootMargin:'-20% 0px -70% 0px'});
+  document.querySelectorAll('main section.card').forEach(s => io.observe(s));
+
+  // ---- File validation helper (client-side UX only — MUST be re-validated server-side) ----
+  function validateFile(file, allowedTypes) {
+    if (!allowedTypes.includes(file.type)) return `Type de fichier non autorisé : ${file.name}`;
+    if (file.size > MAX_FILE_MB * 1024 * 1024) return `${file.name} dépasse ${MAX_FILE_MB} Mo`;
+    return null;
+  }
+
+  function setupUpload(inputId, chipsId, allowedTypes, multiple, maxCount) {
+    const input = document.getElementById(inputId);
+    const chipsEl = document.getElementById(chipsId);
+    let store = [];
+    input.addEventListener('change', () => {
+      const incoming = Array.from(input.files);
+      for (const file of incoming) {
+        const err = validateFile(file, allowedTypes);
+        if (err) { showBanner([err], false); continue; }
+        if (multiple && store.length >= maxCount) { showBanner([`Maximum ${maxCount} fichiers.`], false); break; }
+        store = multiple ? [...store, file] : [file];
+        if (!multiple) break;
+      }
+      render();
+      input.value = '';
+    });
+    function render() {
+      chipsEl.innerHTML = '';
+      store.forEach((f, i) => {
+        const chip = document.createElement('span');
+        chip.className = 'chip';
+        const label = document.createElement('span');
+        label.textContent = f.name;
+        const rm = document.createElement('button');
+        rm.type = 'button'; rm.textContent = '×'; rm.setAttribute('aria-label','Retirer');
+        rm.addEventListener('click', () => { store.splice(i,1); render(); });
+        chip.append(label, rm);
+        chipsEl.appendChild(chip);
+      });
+    }
+    return { getFiles: () => store };
+  }
+  const logoUpload = setupUpload('logo-input','logo-chips', ALLOWED_LOGO, false, 1);
+  const photosUpload = setupUpload('photos-input','photos-chips', ALLOWED_IMG, true, MAX_PHOTOS);
+
+  // ---- Products table ----
+  const CATEGORIES = ['Vêtements','Chaussures','Sacs & Maroquinerie','Beauté & Cosmétique','Alimentation','Électronique','Autre'];
+  const tbody = document.getElementById('products-body');
+  let rowSeq = 0;
+
+  function addProductRow() {
+    rowSeq += 1;
+    const tr = document.createElement('tr');
+    tr.dataset.id = rowSeq;
+    tr.innerHTML = `
+      <td class="num"></td>
+      <td><input type="text" data-field="nom" maxlength="120" required></td>
+      <td><select data-field="categorie">${CATEGORIES.map(c=>`<option>${c}</option>`).join('')}</select></td>
+      <td><input type="text" data-field="marque" maxlength="80"></td>
+      <td><textarea data-field="description" rows="2" maxlength="500"></textarea></td>
+      <td><input type="number" data-field="prix_detail" min="0" step="1"></td>
+      <td><input type="number" data-field="prix_gros" min="0" step="1"></td>
+      <td>
+        <select data-field="photo_dispo"><option value="Non">Non</option><option value="Oui">Oui</option></select>
+      </td>
+      <td class="rm"><button type="button" aria-label="Supprimer la ligne">✕</button></td>`;
+    tr.querySelector('.rm button').addEventListener('click', () => { tr.remove(); renumber(); });
+    tbody.appendChild(tr);
+    renumber();
+  }
+  function renumber() {
+    [...tbody.rows].forEach((r, i) => r.querySelector('.num').textContent = i + 1);
+  }
+  document.getElementById('add-product').addEventListener('click', addProductRow);
+  addProductRow(); // start with one empty row
+
+  function collectProducts() {
+    return [...tbody.rows].map(r => {
+      const get = f => r.querySelector(`[data-field="${f}"]`).value.trim();
+      return {
+        nom: get('nom'), categorie: get('categorie'), marque: get('marque'),
+        description: get('description'), prix_detail: get('prix_detail'),
+        prix_gros: get('prix_gros'), photo_disponible: get('photo_dispo')
+      };
+    }).filter(p => p.nom !== '');
+  }
+
+  // ---- Validation & submit ----
+  const form = document.getElementById('vendor-form');
+  const banner = document.getElementById('status-banner');
+
+  function showBanner(messages, ok) {
+    banner.className = ok ? 'ok' : '';
+    banner.style.display = 'block';
+    banner.innerHTML = ok
+      ? `<strong>${messages[0]}</strong>`
+      : `<strong>Merci de corriger les points suivants :</strong><ul>${messages.map(m=>`<li>${m}</li>`).join('')}</ul>`;
+    banner.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+
+  function clearFieldErrors() {
+    form.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
+  }
+
+  function validateForm() {
+    clearFieldErrors();
+    const errors = [];
+    form.querySelectorAll('[required]').forEach(el => {
+      const visible = el.offsetParent !== null;
+      if (!visible) return;
+      let valid = el.type === 'checkbox' ? el.checked : el.value.trim() !== '';
+      if (valid && el.type === 'email') valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value);
+      if (!valid) {
+        el.classList.add('invalid');
+        errors.push(el.closest('.field, .certify')?.querySelector('label')?.textContent.replace('*','').trim() || 'Champ requis');
+      }
+    });
+    if (collectProducts().length === 0) errors.push('Ajoutez au moins un produit.');
+    return errors;
+  }
+
+  function buildFormData() {
+    const fd = new FormData();
+    const fields = ['entreprise_nom','entreprise_nom_commercial','responsable_nom','telephone','email',
+                     'ville','quartier','observations','commercant_nom','commercant_date'];
+    fields.forEach(name => fd.append(name, form.elements[name]?.value.trim() || ''));
+    ['confirm_liste_produits','confirm_description','confirm_prix_detail','confirm_prix_gros'].forEach(name => {
+      fd.append(name, form.elements[name].checked ? 'oui' : 'non');
+    });
+    fd.append('produits', JSON.stringify(collectProducts()));
+    const logo = logoUpload.getFiles()[0];
+    if (logo) fd.append('logo', logo);
+    photosUpload.getFiles().forEach((f,i) => fd.append(`photo_${i}`, f));
+    return fd;
+  }
+
+  document.getElementById('btn-download').addEventListener('click', () => {
+    const payload = {
+      entreprise: {
+        nom: form.entreprise_nom.value, nom_commercial: form.entreprise_nom_commercial.value,
+        responsable: form.responsable_nom.value, telephone: form.telephone.value,
+        email: form.email.value, ville: form.ville.value, quartier: form.quartier.value
+      },
+      produits: collectProducts(),
+      observations: form.observations.value,
+      engagement: { commercant: form.commercant_nom.value, date: form.commercant_date.value }
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `dossier-fournisseur-${(form.entreprise_nom.value||'brouillon').replace(/\s+/g,'-')}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  document.getElementById('btn-print').addEventListener('click', () => window.print());
+
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const errors = validateForm();
+    if (errors.length) { showBanner(errors, false); return; }
+
+    const submitBtn = form.querySelector('button[type=submit]');
+    submitBtn.disabled = true; submitBtn.textContent = 'Envoi en cours…';
+    try {
+      const res = await fetch(API_ENDPOINT, { method:'POST', body: buildFormData() });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      showBanner(['Dossier envoyé avec succès. Notre équipe revient vers vous sous 48h.'], true);
+    } catch (e) {
+      showBanner(['Envoi impossible pour le moment. Utilisez "Télécharger en JSON" et transmettez le fichier à votre contact MUN FASO.'], false);
+    } finally {
+      submitBtn.disabled = false; submitBtn.textContent = 'Envoyer le dossier';
+    }
+  });
+})();
+
+/*
+ * Sécurité côté serveur (Express) — à implémenter, ce fichier ne fait que de la UX :
+ * - multer avec fileFilter (mime + extension) et limits.fileSize (5 Mo), stockage hors webroot
+ * - express-validator sur tous les champs texte (longueur, whitelist catégories)
+ * - express-rate-limit sur POST /api/vendor-onboarding (anti-spam/anti-flood)
+ * - CSRF token si session cookie utilisée ; sinon endpoint public protégé par reCAPTCHA/hCaptcha
+ * - Ne jamais servir les fichiers uploadés sans re-vérification du type réel (magic bytes, pas juste l'extension)
+ */
+</script>
+</body>
+</html>
